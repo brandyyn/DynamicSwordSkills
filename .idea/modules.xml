@@ -5,6 +5,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/DynamicSwordSkills.api.iml" filepath="$PROJECT_DIR$/.idea/modules/DynamicSwordSkills.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/DynamicSwordSkills.main.iml" filepath="$PROJECT_DIR$/.idea/modules/DynamicSwordSkills.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/DynamicSwordSkills.test.iml" filepath="$PROJECT_DIR$/.idea/modules/DynamicSwordSkills.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.google.coolalias008.dynamicswordskills.DynamicSwordSkills.api.iml" filepath="$PROJECT_DIR$/.idea/modules/com.google.coolalias008.dynamicswordskills.DynamicSwordSkills.api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.google.coolalias008.dynamicswordskills.DynamicSwordSkills.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.google.coolalias008.dynamicswordskills.DynamicSwordSkills.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.google.coolalias008.dynamicswordskills.DynamicSwordSkills.test.iml" filepath="$PROJECT_DIR$/.idea/modules/com.google.coolalias008.dynamicswordskills.DynamicSwordSkills.test.iml" />
     </modules>
   </component>
 </project>
