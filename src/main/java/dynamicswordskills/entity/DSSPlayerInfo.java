@@ -866,9 +866,17 @@ public class DSSPlayerInfo implements IExtendedEntityProperties
 	 * If player has not received starting gear, it is provided
 	 */
 	public void verifyStartingGear() {
-		if (!receivedGear && Config.giveBonusOrb()) {
-			int damage = ((IMetadataSkillItem) DynamicSwordSkills.skillOrb).getItemDamage(Skills.swordBasic);
-			receivedGear = player.inventory.addItemStackToInventory(new ItemStack(DynamicSwordSkills.skillOrb, 1, damage));
+		// Instead of giving a bonus orb, just make sure the player starts
+		// with SwordBasic (lock-on) at least level 1.
+		if (!receivedGear) {
+			SkillBase basic = Skills.swordBasic;
+			SkillBase instance = getTruePlayerSkill(basic);
+			if (instance == null || instance.getLevel() <= 0) {
+				// Grants level 1 of SwordBasic to the player and syncs to client
+				grantSkill(basic);
+			}
+			// Mark that we've already done the starting setup so this only runs once
+			receivedGear = true;
 		}
 	}
 
