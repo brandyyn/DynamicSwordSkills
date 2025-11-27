@@ -138,7 +138,7 @@ public class SwordBasic extends SkillActive implements IComboSkill, ILockOnTarge
 
 	/** Returns max distance at which targets may be acquired or remain targetable */
 	private final int getRange() {
-		return (6 + level);
+		return (10 + level);
 	}
 
 	private float getDamageTolerance() {
@@ -267,10 +267,12 @@ public class SwordBasic extends SkillActive implements IComboSkill, ILockOnTarge
 	 */
 	@SideOnly(Side.CLIENT)
 	private boolean updateTargets(EntityPlayer player) {
-		if (!isTargetValid(player, prevTarget) || !TargetUtils.isTargetInSight(player, prevTarget)) {
+		// Keep previous target only if still valid; line-of-sight no longer required
+		if (!isTargetValid(player, prevTarget)) {
 			prevTarget = null;
 		}
-		if (!isTargetValid(player, currentTarget) || !player.canEntityBeSeen(currentTarget)) {
+		// Do NOT drop current target just because it is out of sight; only if it becomes invalid
+		if (!isTargetValid(player, currentTarget)) {
 			currentTarget = null;
 			if (Config.autoTargetEnabled()) {
 				getNextTarget(player);
