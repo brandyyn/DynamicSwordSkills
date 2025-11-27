@@ -65,7 +65,7 @@ public class TargetUtils
 	/** Max distance squared, used for comparing target distances (avoids having to call sqrt) */
 	private static final double MAX_DISTANCE_SQ = MAX_DISTANCE * MAX_DISTANCE;
 	/** Field of view in degrees for lock-on / sight checks (narrower = must look closer to the target) */
-	private static final int LOCKON_FOV_DEGREES = 20;
+	private static final int LOCKON_FOV_DEGREES = 5;
 	/** UUID for temporary BG2 extended reach attribute modifier */
 	private static final UUID reachModifierID = UUID.fromString("DC3DDFD0-56D1-4B1D-8B25-333C551FBC98");
 
