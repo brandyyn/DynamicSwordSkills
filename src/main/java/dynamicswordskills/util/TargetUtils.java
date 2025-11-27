@@ -1,18 +1,18 @@
 /**
-    Copyright (C) <2016> <coolAlias>
+ Copyright (C) <2016> <coolAlias>
 
-    This file is part of coolAlias' Dynamic Sword Skills Minecraft Mod; as such,
-    you can redistribute it and/or modify it under the terms of the GNU
-    General Public License as published by the Free Software Foundation,
-    either version 3 of the License, or (at your option) any later version.
+ This file is part of coolAlias' Dynamic Sword Skills Minecraft Mod; as such,
+ you can redistribute it and/or modify it under the terms of the GNU
+ General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-    GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 package dynamicswordskills.util;
@@ -33,6 +33,7 @@ import dynamicswordskills.DynamicSwordSkills;
 import mods.battlegear2.api.weapons.Attributes;
 import mods.battlegear2.api.weapons.IExtendedReachWeapon;
 import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
@@ -52,9 +53,8 @@ import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
-
 /**
- * 
+ *
  * A collection of methods related to target acquisition
  *
  */
@@ -64,6 +64,8 @@ public class TargetUtils
 	private static final int MAX_DISTANCE = 256;
 	/** Max distance squared, used for comparing target distances (avoids having to call sqrt) */
 	private static final double MAX_DISTANCE_SQ = MAX_DISTANCE * MAX_DISTANCE;
+	/** Field of view in degrees for lock-on / sight checks (narrower = must look closer to the target) */
+	private static final int LOCKON_FOV_DEGREES = 20;
 	/** UUID for temporary BG2 extended reach attribute modifier */
 	private static final UUID reachModifierID = UUID.fromString("DC3DDFD0-56D1-4B1D-8B25-333C551FBC98");
 
@@ -349,10 +351,96 @@ public class TargetUtils
 	}
 
 	/**
-	 * Returns true if the target's position is within the area that the seeker is facing and the target can be seen
+	 * Returns true if the target's position is within the area that the seeker is facing
+	 * and the target can be seen (using a softer LOS that ignores grass / glass / leaves, etc.)
 	 */
 	private static final boolean isTargetInSight(Vec3 vec3, EntityLivingBase seeker, Entity target) {
-		return seeker.canEntityBeSeen(target) && isTargetInFrontOf(seeker, target, 60);
+		// Custom visibility: ignore "soft" blocks like grass, leaves, glass, etc.
+		// We don't rely on vanilla canEntityBeSeen here because it treats those as opaque.
+		return isSoftVisible(seeker, target) && isTargetInFrontOf(seeker, target, LOCKON_FOV_DEGREES);
+	}
+
+	/**
+	 * Line-of-sight check that treats "soft" blocks (grass, leaves, vines, glass, ice, etc.)
+	 * as transparent for targeting purposes.
+	 */
+	private static final boolean isSoftVisible(EntityLivingBase seeker, Entity target) {
+		World world = seeker.worldObj;
+		if (world == null || target == null) {
+			return false;
+		}
+
+		// Starting and ending points (eye heights)
+		Vec3 start = Vec3.createVectorHelper(
+				seeker.posX,
+				seeker.posY + seeker.getEyeHeight(),
+				seeker.posZ);
+		Vec3 end = Vec3.createVectorHelper(
+				target.posX,
+				target.posY + target.getEyeHeight(),
+				target.posZ);
+
+		double dx = end.xCoord - start.xCoord;
+		double dy = end.yCoord - start.yCoord;
+		double dz = end.zCoord - start.zCoord;
+		double dist = MathHelper.sqrt_double(dx * dx + dy * dy + dz * dz);
+		if (dist <= 0.0001D) {
+			return true;
+		}
+
+		// ~4 samples per block along the ray
+		int steps = (int) (dist * 4.0D);
+		if (steps < 1) {
+			steps = 1;
+		}
+
+		double stepX = dx / steps;
+		double stepY = dy / steps;
+		double stepZ = dz / steps;
+
+		double x = start.xCoord;
+		double y = start.yCoord;
+		double z = start.zCoord;
+
+		for (int i = 0; i < steps; i++) {
+			x += stepX;
+			y += stepY;
+			z += stepZ;
+
+			int bx = MathHelper.floor_double(x);
+			int by = MathHelper.floor_double(y);
+			int bz = MathHelper.floor_double(z);
+
+			Block block = world.getBlock(bx, by, bz);
+			if (block == null || block.isAir(world, bx, by, bz)) {
+				continue;
+			}
+
+			// Ignore blocks that don't actually block movement or have no collision box
+			AxisAlignedBB bb = block.getCollisionBoundingBoxFromPool(world, bx, by, bz);
+			if (bb == null) {
+				continue;
+			}
+
+			Material mat = block.getMaterial();
+
+			// Treat these materials as transparent for lock-on:
+			if (!mat.blocksMovement()
+					|| mat == Material.leaves
+					|| mat == Material.plants
+					|| mat == Material.vine
+					|| mat == Material.glass
+					|| mat == Material.ice
+					|| mat == Material.circuits) {
+				continue;
+			}
+
+			// Hit a solid, sight-blocking block -> can't "see" the target
+			return false;
+		}
+
+		// No solid blockers along the line
+		return true;
 	}
 
 	/**
